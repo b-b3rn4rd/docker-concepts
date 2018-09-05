@@ -12,7 +12,7 @@ the Docker concepts above the basics, so I decided to take a step back and make 
 
 * What *actually* Docker is and it's architecture?
 * How Docker images, layers and containers working together?
-* Docker networking and DNS
+* Docker networking and DNS (TBA)
 
 ### What actually Docker is and it's architecture?
 
