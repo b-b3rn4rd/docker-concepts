@@ -187,7 +187,7 @@ When a file exists in both container and image layers, file container layer take
 
 By default, Docker runs containers with a limited set of Linux [capabilities](https://linux.die.net/man/7/capabilities) and without access to host devices, 
  when the `--privileged` option is specified a container will run with [all available capabilities](https://github.com/moby/moby/blob/8e610b2b55bfd1bfa9436ab110d311f5e8a74dcb/daemon/exec_linux.go#L27) 
-and access to all devices on the host.
+and access to all devices on the host. Privileged flag also disables [AppArmor](https://en.wikipedia.org/wiki/AppArmor) and [Seccomp](https://en.wikipedia.org/wiki/Seccomp) security profiles by setting them to `unconfined`
 
 Device access is controlled by [cgroups](https://www.kernel.org/doc/Documentation/cgroup-v1/devices.txt) and gives container access
 to specific block storage device or loop device or audio device.
