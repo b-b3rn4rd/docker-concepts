@@ -12,7 +12,7 @@ the Docker concepts above the basics, so I decided to take a step back and make 
 
 * What *actually* Docker is and it's architecture?
 * How Docker images, layers and containers working together?
-* What is `--privileged` more and rootless containers ?
+* What is `--privileged` mode and rootless containers ?
 * Docker networking and DNS (TBA)
 
 ### What actually Docker is and it's architecture?
@@ -183,7 +183,7 @@ When a file exists in both container and image layers, file container layer take
 
 
 
-### What is `--privileged` more and rootless containers ?
+### What is `--privileged` mode and rootless containers ?
 
 By default, Docker runs containers with a limited set of Linux [capabilities](https://linux.die.net/man/7/capabilities) and without access to host devices, 
  when the `--privileged` option is specified a container will run with [all available capabilities](https://github.com/moby/moby/blob/8e610b2b55bfd1bfa9436ab110d311f5e8a74dcb/daemon/exec_linux.go#L27) 
