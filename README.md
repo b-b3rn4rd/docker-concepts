@@ -12,6 +12,7 @@ the Docker concepts above the basics, so I decided to take a step back and make 
 
 * What *actually* Docker is and it's architecture?
 * How Docker images, layers and containers working together?
+* What is `--privileged` more and rootless containers ?
 * Docker networking and DNS (TBA)
 
 ### What actually Docker is and it's architecture?
@@ -181,6 +182,80 @@ When a file exists in both container and image layers, file container layer take
 ![overlay](https://docs.docker.com/storage/storagedriver/images/overlay_constructs.jpg)
 
 
+
+### What is `--privileged` more and rootless containers ?
+
+By default, Docker runs containers with a limited set of Linux [capabilities](https://linux.die.net/man/7/capabilities) and without access to host devices, 
+ when the `--privileged` option is specified a container will run with [all available capabilities](https://github.com/moby/moby/blob/8e610b2b55bfd1bfa9436ab110d311f5e8a74dcb/daemon/exec_linux.go#L27) 
+and access to all devices on the host.
+
+Device access is controlled by [cgroups](https://www.kernel.org/doc/Documentation/cgroup-v1/devices.txt) and gives container access
+to specific block storage device or loop device or audio device.
+
+Linux capabilities determine what a process/container is allowed to do, by default capabilities bounding set is inherited at fork from the thread's parent.
+
+
+
+Starting from the version 1.10 Docker provides support for user namespaces [14]. User namespace is the mechanism for remapping UIDs inside a container.
+User namespaces allow to re-map users to a less-privileged user on the Docker host while having root access in the container.
+Since the mapped user has no privileges on the host machine itself it helps to prevent privilege-escalation attacks from within a container.
+
+Simple configuration example, for more examples, see [following article](https://docs.docker.com/engine/security/userns-remap)
+
+```bash
+# run docker container
+$ docker run -it -d ubuntu
+  Unable to find image 'ubuntu:latest' locally
+  latest: Pulling from library/ubuntu
+  124c757242f8: Pull complete 
+  9d866f8bde2a: Pull complete 
+  fa3f2f277e67: Pull complete 
+  398d32b153e8: Pull complete 
+  afde35469481: Pull complete 
+  Digest: sha256:de774a3145f7ca4f0bd144c7d4ffb2931e06634f11529653b23eba85aef8e378
+  Status: Downloaded newer image for ubuntu:latest
+  54bbb44dc7b1a151385b4537d861825b0bc590624521e0d7190204c7daf78ec8
+
+# show container's process information, notice the process is running under root
+$ docker top 54bbb44dc7b1a15
+  UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+  root                4371                4354                0                   00:52               pts/0               00:00:00            /bin/bash
+
+# enable user re-mapping, use default dockremap user
+$ sudo vim /etc/docker/daemon.json
+  {
+    "userns-remap": "default"
+  }
+$ sudo service docker start  
+
+# check that docker has created the default remapping user
+$ id dockremap
+  uid=112(dockremap) gid=116(dockremap) groups=116(dockremap)
+
+$ grep dockremap /etc/subuid
+  dockremap:231072:65536
+  
+# run docker container
+$ docker run -it -d ubuntu
+  Unable to find image 'ubuntu:latest' locally
+  latest: Pulling from library/ubuntu
+  124c757242f8: Pull complete 
+  9d866f8bde2a: Pull complete 
+  fa3f2f277e67: Pull complete 
+  398d32b153e8: Pull complete 
+  afde35469481: Pull complete 
+  Digest: sha256:de774a3145f7ca4f0bd144c7d4ffb2931e06634f11529653b23eba85aef8e378
+  Status: Downloaded newer image for ubuntu:latest
+  1b3c562331df4d8a2389f0caaa1ebc4577289674a3634bc1254440cfc6fc9531
+  
+# check that docker container's process is running as remapped user
+$ docker top 1b3c562331df4d8a2389f
+  UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+  231072              5226                5209                0                   01:18               pts/0               00:00:00            /bin/bash
+```
+
+
+
 Links
 -----------
 
@@ -196,3 +271,7 @@ Links
 [10] https://blog.docker.com/2016/04/docker-containerd-integration/
 [11] https://github.com/containerd/containerd/blob/master/docs/getting-started.md
 [12] https://github.com/opencontainers/runc/tree/master/libcontainer
+[13] https://github.com/moby/moby/blob/7129bebe0a93455668e8b320ca835f02220e120c/daemon/oci_linux.go#L87
+[14] https://docs.docker.com/engine/security/userns-remap/
+[15] https://success.docker.com/article/introduction-to-user-namespaces-in-docker-engine
+[16] https://docs.docker.com/engine/security/userns-remap/#user-namespace-known-limitations
